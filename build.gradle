@@ -1,0 +1,89 @@
+group 'com.chocohead'
+version '1.0'
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven {
+        name = "mojang"
+        url = "https://libraries.minecraft.net/"
+    }
+}
+
+dependencies {
+    compile ("net.minecraft:launchwrapper:1.12") {
+    	transitive = false
+    }
+	compile "org.ow2.asm:asm-debug-all:5.0.3"
+	//compile files("libs/client.jar")
+}
+
+sourceSets {
+	main {
+		java {
+			srcDir 'src'
+		}
+		resources {
+			srcDir 'resources'
+		}
+	}
+}
+
+compileJava.dependsOn clean
+
+// The minecraft version we're targetting
+def mcversion = "1.13"
+// The name of the version profile we will create in the the launcher
+def profilename = "Not TMI"
+// The name of the runnable jar file containing the actual code
+archivesBaseName = "not_tmi"
+// The name of the zip bundling everything into a convenient package
+def outputzip = "${profilename} combined.zip"
+
+def groupdir = group.replaceAll('\\.','/')
+
+def getDate() {
+    def date = new Date()
+    def formattedDate = date.format("yyyy-MM-dd'T'HH:mm:ssZ")
+    return formattedDate
+}
+
+task processJSON(type: Copy) {
+    from file('version.json')
+    into "build/dist/versions/${profilename}"
+    
+    rename "version.json", "${profilename}.json"
+    expand(minecraft_version: "${mcversion}", 
+    		profile_name: "${profilename}",
+    		artifact: "${project.group}:${archivesBaseName}:${version}",
+    		timestamp: getDate()
+    		)
+}
+
+task buildJars(type: Copy, dependsOn: ["processJSON"]) {
+    println "Main result group: ${groupdir}"
+
+    from jar.getArchivePath()
+    into file("build/dist/libraries/${groupdir}/${archivesBaseName}/${version}/")
+}
+
+task makeZip(type: Zip, dependsOn: "buildJars") {
+    archiveName "${outputzip}"
+    from "build/dist"
+}
+
+task tryThis() {
+	println group
+	println this.group
+	println project.group
+	println jar.baseName
+	println jar.archiveName
+	println jar.version
+    println jar.archivePath
+}
+
+build.dependsOn makeZip
