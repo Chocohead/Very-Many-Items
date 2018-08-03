@@ -13,6 +13,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 
+import com.chocohead.nottmi.RecipeFinder.RecipeResult;
+
 public class RecipeInventory implements IInventory {
 	private interface StackDisplay {
 		ItemStack getStack();
@@ -32,21 +34,22 @@ public class RecipeInventory implements IInventory {
 		}
 	}
 	private final StackDisplay[] ingredients = new StackDisplay[9];
-	private final List<List<Ingredient>> recipes;
+	private final List<RecipeResult> recipes;
 	private final ItemStack output;
 	private int index = 0;
 	float time;
 
 	public RecipeInventory(ItemStack target) {
-		recipes = RecipeFinder.findIngredients(target);
-		if (!recipes.isEmpty()) updateRecipe();
+		output = target.copy();
 
-		output = target;
+		recipes = RecipeFinder.findIngredients(target);
+		if (!recipes.isEmpty()) updateRecipe();		
 	}
 	
 	private void updateRecipe() {
-		List<Ingredient> ingredients = recipes.get(index);
-		System.out.println("Switching to ingredients: " + ingredients);
+		RecipeResult recipe = recipes.get(index);
+		System.out.println("Switching to recipe: " + recipe);
+		List<Ingredient> ingredients = recipe.getIngredients();
 
 		for (int y = 0, limit = ingredients.size(); y < 3; y++) {
 			for (int x = 0; x < 3; x++) {
@@ -65,6 +68,7 @@ public class RecipeInventory implements IInventory {
 				}
 			}
 		}
+		output.setCount(recipe.amount());
 	}
 
 	public void next() {
