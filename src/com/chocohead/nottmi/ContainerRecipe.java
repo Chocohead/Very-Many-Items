@@ -29,11 +29,11 @@ public class ContainerRecipe extends Container {
 		}
 	}
 	public ContainerRecipe(RecipeInventory recipe, int xOffset, int yOffset) {
-		addSlotToContainer(new Slot(recipe, 9, xOffset + 94, yOffset + 18));
+		addSlotToContainer(new RecipeSlot(recipe, 9, xOffset + 94, yOffset + 18));
 
 		for (int y = 0; y < 3; y++) {
 			for (int x = 0; x < 3; x++) {
-				addSlotToContainer(new Slot(recipe, x + y * 3, xOffset + x * 18, yOffset + y * 18));
+				addSlotToContainer(new RecipeSlot(recipe, x + y * 3, xOffset + x * 18, yOffset + y * 18));
 			}
 		}
 	}
