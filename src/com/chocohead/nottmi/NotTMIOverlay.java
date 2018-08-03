@@ -6,6 +6,7 @@ import java.util.OptionalInt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.ItemRenderer;
 import net.minecraft.item.ItemStack;
 
@@ -20,12 +21,7 @@ public class NotTMIOverlay {
 	}
 
 	public void drawItem(ItemStack stack, int x, int y) {
-		//hardSetFlatMode(false);
-
 		renderer.renderItemIntoGUI(stack, x - left, y - top);
-		/*Gui.drawRect(x, y, x + 50, y + 50, ~0x000000);
-		Gui.drawRect(0, 0, 400, 200, ~0x000000);*/
-		//renderer.renderItemIntoGUI(this.window.fontRenderer, this.window.mc.p, paramItemStack, paramInt1 - this.windowX, paramInt2 - this.windowY);
 	}
 
 	public void drawRect(int x, int y, int width, int height, int colour) {
@@ -45,39 +41,24 @@ public class NotTMIOverlay {
 	}
 
 	public void drawTooltip(ItemStack stack, int x, int y) {
-		List<String> lines = Minecraft.getMinecraft().currentScreen.getItemToolTip(stack);
+		GuiScreen screen = Minecraft.getMinecraft().currentScreen;
+		List<String> lines = screen.getItemToolTip(stack);
 
 		OptionalInt maybeMax = lines.stream().mapToInt(font::getStringWidth).max();
 		if (maybeMax.isPresent()) {
 			int max = maybeMax.getAsInt();
 
-			if (x + max + 12 > Minecraft.getMinecraft().currentScreen.width) {
+			if (x + max + 12 > screen.width) {
 				x -= 16 + max;
 			}
 
 			int tooltipHeight = lines.size() > 1 ? lines.size() * 10 : 8;
-			int height = Minecraft.getMinecraft().currentScreen.height;
+			int height = screen.height;
 			if (y + tooltipHeight > height) {
 				y = height - tooltipHeight;
 			}
 
-			Minecraft.getMinecraft().currentScreen.drawHoveringText(lines, x - left, y - top);
+			screen.drawHoveringText(lines, x - left, y - top);
 		}
-
-		/*//GlStateManager.disableLighting();
-		GlStateManager.disableDepth();
-		int i = 3;
-		int j = paramInt1 + 12;
-		int k = paramInt2 - 15;
-		if (k < 0) {
-			k = 0;
-		}
-		int m = getTextWidth(paramString) + i * 2;
-		int width = Minecraft.getMinecraft().currentScreen.width;
-		if (j + m > width) {
-			j -= j + m - width;
-		}
-		drawRect(j, k, m, 8 + i * 2, -301989888);
-		drawText(j + i, k + i, paramString, -1);*/
 	}
 }
