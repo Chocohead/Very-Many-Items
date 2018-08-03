@@ -5,6 +5,7 @@ import java.util.List;
 import org.lwjgl.glfw.GLFW;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
@@ -19,15 +20,18 @@ public enum NotTMI {
 	INSTANCE;
 
 	private GuiContainer container;
-	private NotTMIOverlay overlay = new NotTMIOverlay();
+	private NotTMIOverlay overlay;
 	private Button prevButton, nextButton;
 
-	public void bind(GuiContainer container) {
-		NotTMILog.info("Binding " + container);
-		this.container = container;
+	public void bind(GuiScreen screen) {
+		if (screen instanceof GuiContainer) {
+			NotTMILog.info("Binding " + screen);
+			this.container = (GuiContainer) screen;
+			overlay = new NotTMIOverlay();
 
-		prevButton = new Button(() -> "Previous (" + (ItemList.page + 1) + '/' + ItemList.INSTANCE.numPages + ')');
-		nextButton = new Button("Next");
+			prevButton = new Button(() -> "Previous (" + (ItemList.page + 1) + '/' + ItemList.INSTANCE.numPages + ')');
+			nextButton = new Button("Next");
+		}
 	}
 
 	public void setSize(int xSize, int ySize, int guiLeft, int guiTop) {

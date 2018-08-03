@@ -25,6 +25,12 @@ import com.chocohead.nottmi.NotTMILog;
 import com.chocohead.nottmi.Util;
 
 public class NotTMITransformer implements IClassTransformer {
+	private static final String Minecraft = Util.inDev() ? "net.minecraft.client.Minecraft" : "cfi";
+	private static final String MinecraftOwner = Minecraft.replace('.', '/');
+	private static final String currentScreen = Util.inDev() ? "currentScreen" : "m";
+	private static final String GuiScreen = Util.inDev() ? "net.minecraft.client.gui.GuiScreen" : "cjs";
+	private static final String GuiScreenOwner = GuiScreen.replace('.', '/');
+	private static final String displayGuiScreen = Util.inDev() ? "displayGuiScreen" : "a";
 	private static final String GuiContainer = Util.inDev() ? "net.minecraft.client.gui.inventory.GuiContainer" : "ckn";
 	private static final String GuiContainerOwner = GuiContainer.replace('.', '/');
 	private static final String xSize = Util.inDev() ? "xSize" : "f";
@@ -39,33 +45,49 @@ public class NotTMITransformer implements IClassTransformer {
 
 	@Override
 	public byte[] transform(String name, String transformedName, byte[] basicClass) {
-		if (GuiContainer.equals(name)) {
+		if (Minecraft.equals(name)) {
 			ClassNode node = new ClassNode();
 			new ClassReader(basicClass).accept(node, 0);
 
 			for (MethodNode method : node.methods) {
-				NotTMILog.info("Passed " + method.name);
-				if ("<init>".equals(method.name)) {
+				if (displayGuiScreen.equals(method.name) && ("(L" + GuiScreenOwner + ";)V").equals(method.desc)) {
 					boolean injection = false;
 
 					for (Iterator<AbstractInsnNode> it = method.instructions.iterator(); it.hasNext();) {
 						AbstractInsnNode instruction = it.next();
 
-						if (instruction.getType() == AbstractInsnNode.INSN && instruction.getOpcode() == Opcodes.RETURN) {
-							InsnList l = new InsnList();
+						if (instruction.getType() == AbstractInsnNode.FIELD_INSN && instruction.getOpcode() == Opcodes.PUTFIELD) {
+							FieldInsnNode f = (FieldInsnNode) instruction;
 
-							l.add(new FieldInsnNode(Opcodes.GETSTATIC, "com/chocohead/nottmi/NotTMI", "INSTANCE", "Lcom/chocohead/nottmi/NotTMI;"));
-							l.add(new VarInsnNode(Opcodes.ALOAD, 0));
-							l.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "com/chocohead/nottmi/NotTMI", "bind", "(L" + GuiContainerOwner + ";)V", false));
+							if (MinecraftOwner.equals(f.owner) && currentScreen.equals(f.name) && ('L' + GuiScreenOwner + ';').equals(f.desc)) {
+								InsnList l = new InsnList();
 
-							method.instructions.insertBefore(instruction, l);
-							injection = true;
-							break;
+								l.add(new FieldInsnNode(Opcodes.GETSTATIC, "com/chocohead/nottmi/NotTMI", "INSTANCE", "Lcom/chocohead/nottmi/NotTMI;"));
+								l.add(new VarInsnNode(Opcodes.ALOAD, 1));
+								l.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, "com/chocohead/nottmi/NotTMI", "bind", "(L" + GuiScreenOwner + ";)V", false));
+
+								method.instructions.insertBefore(instruction.getPrevious().getPrevious(), l);
+								injection = true;
+								break;
+							}
 						}
 					}
 
-					NotTMILog.info("Injection for constructor: " + injection);
-				} else if (initGui.equals(method.name) && "()V".equals(method.desc)) {
+					NotTMILog.info("Injection for displayGuiScreen: " + injection);
+					break;
+				}
+			}
+
+			ClassWriter writer = new ClassWriter(0);
+			node.accept(writer);
+			return writer.toByteArray();
+		} else if (GuiContainer.equals(name)) {
+			ClassNode node = new ClassNode();
+			new ClassReader(basicClass).accept(node, 0);
+
+			for (MethodNode method : node.methods) {
+				NotTMILog.info("Passed " + method.name);
+				if (initGui.equals(method.name) && "()V".equals(method.desc)) {
 					boolean injection = false;
 
 					for (Iterator<AbstractInsnNode> it = method.instructions.iterator(); it.hasNext();) {
