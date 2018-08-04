@@ -13,7 +13,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 
-import com.chocohead.nottmi.RecipeFinder.RecipeResult;
+import com.chocohead.nottmi.recipes.RecipeFinder;
+import com.chocohead.nottmi.recipes.RecipeFinder.RecipeResult;
 
 public class RecipeInventory implements IInventory {
 	private interface StackDisplay {
