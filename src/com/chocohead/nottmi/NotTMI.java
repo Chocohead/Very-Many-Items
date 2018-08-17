@@ -8,7 +8,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.inventory.GuiContainer;
-import net.minecraft.client.gui.inventory.GuiContainerCreative;
+import net.minecraft.client.gui.recipebook.GuiRecipeBook;
+import net.minecraft.client.gui.recipebook.IRecipeShownListener;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -22,6 +23,7 @@ public enum NotTMI {
 	private GuiContainer container;
 	private NotTMIOverlay overlay;
 	private Button prevButton, nextButton;
+	private GuiRecipeBook book;
 
 	public void bind(GuiScreen screen) {
 		if (screen instanceof GuiContainer) {
@@ -31,12 +33,27 @@ public enum NotTMI {
 
 			prevButton = new Button(() -> "Previous (" + (ItemList.page + 1) + '/' + ItemList.INSTANCE.numPages + ')');
 			nextButton = new Button("Next");
+
+			if (screen instanceof IRecipeShownListener) {
+				book = ((IRecipeShownListener) screen).func_194310_f();
+			} else {
+				book = null;
+			}
 		}
 	}
 
 	public void setSize(int xSize, int ySize, int guiLeft, int guiTop) {
 		NotTMILog.info("Corner of " + container + " with size [" + xSize + ", " + ySize + "] set to [" + guiLeft + ", " + guiTop + ']');
 		overlay.resize(guiLeft, guiTop);
+		int left = guiLeft;
+		int freeWidth = container.width - (left + xSize);
+		System.out.print("Normal: " + freeWidth);
+		left = 177 + (container.width - xSize - 200) / 2;
+		freeWidth = container.width - (left + xSize);
+		//System.out.println("Normal: " + guiLeft + ", Open: " + (177 + (container.width - xSize - 200) / 2));
+		System.out.println(", Open: " + freeWidth);
+		/*boolean open = book.isVisible();
+		int openOffset = open ? 177 + (container.width - xSize - 200) / 2 : guiLeft;*/
 		ItemList.INSTANCE.resize(container.width, container.height, xSize, ySize, guiLeft, guiTop);
 
 		prevButton.x = guiLeft + xSize;
@@ -56,9 +73,18 @@ public enum NotTMI {
 			public boolean mouseClicked(double mouseX, double mouseY, int button) {
 				NotTMILog.info("Clicked " + button + " at " + mouseX + ", " + mouseY);
 				if (ItemList.INSTANCE.hoverItem != null) {
-					Minecraft.getMinecraft().player.sendChatMessage("/give @s " + Item.REGISTRY.getNameForObject(ItemList.INSTANCE.hoverItem.getItem()));
+					switch (button) {
+					case GLFW.GLFW_MOUSE_BUTTON_LEFT:
+						Minecraft.getMinecraft().player.sendChatMessage("/give @s " + Item.REGISTRY.getNameForObject(ItemList.INSTANCE.hoverItem.getItem()) + " 64");
+						return true;
 
-					return true;
+					case GLFW.GLFW_MOUSE_BUTTON_RIGHT:
+						Minecraft.getMinecraft().player.sendChatMessage("/give @s " + Item.REGISTRY.getNameForObject(ItemList.INSTANCE.hoverItem.getItem()));
+						return true;
+
+					default:
+						return false;
+					}
 				} else if (prevButton.contains((int) mouseX, (int) mouseY)) {
 					ItemList.page = Math.floorMod(ItemList.page - 1, ItemList.INSTANCE.numPages);
 					prevButton.onClick();
@@ -78,13 +104,13 @@ public enum NotTMI {
 	public void onDraw(int mouseX, int mouseY) {
 		//NotTMILog.info("Drawing in " + container + " with mouse at " + mouseX + ", " + mouseY);
 
+		if (book != null && book.isVisible()) {
+			
+		}
+
 		prevButton.draw(overlay, mouseX, mouseY);
 		nextButton.draw(overlay, mouseX, mouseY);
 		ItemList.INSTANCE.draw(overlay, mouseX, mouseY);
-
-		if (container instanceof GuiContainerCreative) {
-
-		}
 	}
 
 	public boolean onKey(int key, int scanCode, int modifiers) {
